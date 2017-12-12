@@ -1,5 +1,7 @@
 from unittest.case import TestCase
+from main import DeletionJob
 
 
-class MainTestCase(TestCase):
-    pass
+class DeletionJobTestCase(TestCase):
+    def test_run(self):
+        hasattr(DeletionJob, 'run')

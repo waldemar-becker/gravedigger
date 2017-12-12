@@ -16,7 +16,7 @@ class DeletionJob(object):
         self.reason = reason
 
     def run(self):
-
+        pass
 
     def __repr__(self):
         return str(self.__dict__)
