@@ -1,9 +1,3 @@
-"""
-workon dead_code_remover
-python main.py C:\projects\stdnum\
-echo $LastExitCode # powershell
-"""
-
 from vulture.core import _parse_args, Vulture
 from vulture import utils
 
@@ -21,13 +15,13 @@ class DeletionJob(object):
     def __repr__(self):
         return str(self.__dict__)
 
-		
+
 if __name__ == '__main__':
     options, args = _parse_args()
     vulture = Vulture(verbose=options.verbose)
     vulture.scavenge(args, exclude=options.exclude)
     code_items = vulture.get_unused_code(
-        min_confidence= 90,#options.min_confidence,
+        min_confidence=90,
         sort_by_size=options.sort_by_size
     )
 
@@ -41,4 +35,4 @@ if __name__ == '__main__':
             reason=item.message + ' ({}% confidence)'.format(item.confidence)
         ))
 
-    print DELETION_JOBS
+    print(DELETION_JOBS)

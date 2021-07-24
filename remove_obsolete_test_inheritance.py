@@ -1,7 +1,4 @@
 """
-Usage: python remove_obsolete_test_inheritance.py <project path> <class reference cutoff> <test case indicator class names>
-
-
 reduce test code automatically...
 through checking obsolete test class inheritance
 
@@ -39,13 +36,12 @@ if superclass
 				pick next super class
 """
 import sys
-from git import Repo, Git
+from git import Repo
 import os
 import re
 import subprocess
 from glob import glob
 import pyclbr
-
 
 SUPER_CLASSES_RE = r"^class\s{class_name}\((?P<super>(\w|\,|\.|\s)*)\)\:"
 all_classes_by_names = dict()
@@ -64,7 +60,7 @@ def find_test_modules(root_path, search_pattern='test*.py'):
 
 
 def get_all_classes(test_module_path):
-    module_name = test_module_path.split('/')[-1].replace('.py','')
+    module_name = test_module_path.split('/')[-1].replace('.py', '')
     package_path = os.path.dirname(test_module_path)
     return pyclbr.readmodule(module_name, path=[package_path])
 
@@ -137,7 +133,7 @@ def is_test_case_passing(class_reference, shell_test_cmd, project_path):
     command = ' '.join(whole_command)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
     proc_stdout = process.communicate()[0].strip()
-    print proc_stdout
+    print(proc_stdout)
     return not bool(process.returncode)
 
 
@@ -170,7 +166,7 @@ def remove_superclass_within_file(class_name, superclass_to_be_removed):
         if not re.search(SUPER_CLASSES_RE.format(class_name=class_name), file_content, re.MULTILINE).group(0):
             raise Exception(class_name + ' could not be found in the file.')
         elif not superclass_to_be_removed in \
-            re.search(SUPER_CLASSES_RE.format(class_name=class_name), file_content, re.MULTILINE).group('super'):
+                 re.search(SUPER_CLASSES_RE.format(class_name=class_name), file_content, re.MULTILINE).group('super'):
             raise Exception(superclass_to_be_removed + ' superclass could not be found in class header.')
 
         new_content = re.sub(
@@ -189,14 +185,10 @@ class GitHelper(object):
     def __init__(self, project_path):
         self.project_path = project_path
         self.bare_repo = Repo.init(project_path, bare=True)
-        # self.cli = Git(working_dir=project_path)  #os.path.expanduser("~/git/GitPython")
-        # print self.cli.execute(['git', 'symbolic-ref --short HEAD'])
 
         if self.are_files_modified():
             raise Exception('There are modified files, please commit them before I start again.')
         self.start_working_branch()
-        # if self.bare_repo.active_branch.name == 'master':
-        #     raise Exception('I won\'t do anything on your master branch!!!')
 
     def are_files_modified(self):
         return bool(len(self.bare_repo.index.diff(None)))
@@ -208,7 +200,6 @@ class GitHelper(object):
     def commit_and_push_changes(self, message):
         self.bare_repo.git.add(update=True)
         self.bare_repo.git.commit(message=message)
-        # self.bare_repo.git.push()
 
     def start_working_branch(self):
         self.bare_repo.git.checkout('gravedigger')
@@ -222,16 +213,16 @@ if __name__ == '__main__':
     git_helper = GitHelper(project_path=PROJECT_PATH)
 
     ###################################
-    print '* Collect all possible test classes...'
+    print('* Collect all possible test classes...')
     for cur_test_module in test_modules:
         cur_classes_by_names = get_all_classes(cur_test_module)
         all_classes_by_names.update(cur_classes_by_names)  # Expecting class names to be unique across project!
 
     ###################################
-    print '* Analyze all test classes...'
+    print('* Analyze all test classes...')
     for class_name, class_details in all_classes_by_names.items():
         if does_class_inherit_from_certain_superclass(class_name, TEST_CASE_INDICATOR_CLASS_NAMES[0]) or \
-           does_class_inherit_from_certain_superclass(class_name, TEST_CASE_INDICATOR_CLASS_NAMES[1]):
+                does_class_inherit_from_certain_superclass(class_name, TEST_CASE_INDICATOR_CLASS_NAMES[1]):
             test_case_names_by_inheritance.add(class_name)
 
         if class_or_superclasses_have_test_methods(class_name):
@@ -239,7 +230,7 @@ if __name__ == '__main__':
 
     all_test_case_names = test_case_names_by_inheritance.intersection(test_case_names_by_method_def)
 
-    print '* Refactor obsolete inherited super classes of all test cases...'
+    print('* Refactor obsolete inherited super classes of all test cases...')
     for cur_test_case_name in all_test_case_names:
         superclasses_without_test_methods = get_super_classes_without_test_methods(
             cur_test_case_name,
@@ -256,29 +247,28 @@ if __name__ == '__main__':
 
             cur_class_reference = get_class_reference(cur_test_case_name, PROJECT_PATH, cut_off=CLASS_REFERENCE_CUTOFF)
 
-            print '* Running test case: ' + cur_class_reference
+            print('* Running test case: ' + cur_class_reference)
             cur_class_successfully_refactored = is_test_case_passing(
                 cur_class_reference,
                 'make docker-test args="{} --failfast"',
                 PROJECT_PATH
             )
             if cur_class_successfully_refactored:
-                print 'SUCCESS'
-                print '* Commiting changes...'
+                print('SUCCESS')
+                print('* Commiting changes...')
                 git_helper.commit_and_push_changes("Simplified " + cur_test_case_name)
             else:
-                print 'FAIL'
-                print '* Reverting changes...'
+                print('FAIL')
+                print('* Reverting changes...')
                 git_helper.revert_changes()
 
     ####################################
     # report
-    print 'found total amt classes:'
-    print len(all_classes_by_names.keys())
+    print('found total amt classes:')
+    print(len(all_classes_by_names.keys()))
 
-    print 'found test_case_names_by_inheritance:'
-    print len(test_case_names_by_inheritance)
+    print('found test_case_names_by_inheritance:')
+    print(len(test_case_names_by_inheritance))
 
-    print 'found test_case_names_by_method_def:'
-    print len(test_case_names_by_method_def)
-
+    print('found test_case_names_by_method_def:')
+    print(len(test_case_names_by_method_def))
