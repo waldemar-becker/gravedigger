@@ -1,4 +1,4 @@
-# Gravedigger - The dead code remover
+# Gravedigger - The dead code remover for python projects
 This project is still in experimental mode and was written quick+dirty.
 
 ## Installation
@@ -6,7 +6,9 @@ Package for this project is not here yet.
 ### Unix
 ```
 git clone https://github.com/waldemar-becker/gravedigger.git
+cd gravedigger
 virtualenv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
